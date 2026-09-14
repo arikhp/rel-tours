@@ -261,8 +261,18 @@ if (!CHROME) {
       await sleep(150)
       check(`[${label}] arrow key moves the highlight`, (await ev(`document.querySelectorAll('[role=option][aria-selected=true]').length`)) === 1)
 
+      // Full search.
+      await setCombo(0, 'TLV'); await setCombo(1, 'TYO')
+      await ev(`document.body.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}))`)
+      await sleep(250)
+
       // The swap button floats over the route fields; it must not land on top of
-      // the caption naming the resolved airport.
+      // the caption naming the resolved airport. Both captions are populated at
+      // this point, so the check cannot pass by finding nothing to collide with.
+      const captioned = await ev(`
+        Array.from(document.querySelectorAll('form p')).filter(p=>p.textContent.trim()).length`)
+      check(`[${label}] field captions are populated (guards the next check)`, captioned >= 2, `${captioned}`)
+
       const overlap = await ev(`
         (() => {
           const b = document.querySelector('button[aria-label="Swap departure and arrival"]');
@@ -281,9 +291,6 @@ if (!CHROME) {
         })()`)
       check(`[${label}] swap button clears the field captions`, overlap === 'clear', overlap)
 
-      // Full search.
-      await setCombo(0, 'TLV'); await setCombo(1, 'TYO')
-      await ev(`document.body.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}))`)
       await ev(`document.querySelector('button[type=submit]').click()`)
       await sleep(3200)
 
