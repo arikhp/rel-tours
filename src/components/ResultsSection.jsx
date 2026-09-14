@@ -49,7 +49,8 @@ export default function ResultsSection({ status, results, criteria, error, onRet
     <section
       id="results"
       aria-label="Flight results"
-      className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6"
+      /* scroll-mt clears the sticky header when scrolled into view */
+      className="mx-auto w-full max-w-6xl scroll-mt-24 px-4 py-14 sm:px-6"
     >
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {status === 'loading' && 'Searching for flights'}

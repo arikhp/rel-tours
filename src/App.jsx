@@ -23,6 +23,9 @@ export default function App() {
     setStatus('loading')
     setError('')
 
+    // Move to the results while they load, so the skeletons are visible.
+    document.getElementById('results')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
     try {
       const offers = await searchFlights(next)
       if (id !== requestId.current) return
@@ -47,7 +50,7 @@ export default function App() {
       <main className="flex-1">
         <Hero />
 
-        <div ref={formRef} className="mx-auto w-full max-w-5xl px-4 sm:px-6">
+        <div ref={formRef} className="mx-auto w-full max-w-5xl scroll-mt-24 px-4 sm:px-6">
           <SearchForm
             onSearch={runSearch}
             busy={status === 'loading'}
