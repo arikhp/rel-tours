@@ -25,3 +25,7 @@ dist-ssr
 
 # Claude Code local settings (machine-specific permission allowlist)
 .claude/
+
+# gh-pages deploy worktree (created and removed by npm run deploy)
+.gh-pages-worktree/
+node_modules/.qa-chrome/

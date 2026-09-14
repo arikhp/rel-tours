@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "qa": "node scripts/qa.mjs",
+    "deploy": "node scripts/deploy.mjs"
   },
   "dependencies": {
     "d3-geo": "^3.1.1",

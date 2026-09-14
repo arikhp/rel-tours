@@ -46,7 +46,34 @@ npm install
 npm run dev      # http://localhost:5173
 npm run build    # production build into dist/
 npm run lint     # oxlint
+npm run qa       # full QA pipeline (see below)
+npm run deploy   # runs QA, then publishes to GitHub Pages
 ```
+
+## QA pipeline
+
+`npm run qa` is the gate in front of every deploy — 87 checks, ~20s:
+
+| Stage | What it proves |
+| --- | --- |
+| Lint & build | oxlint clean; production build succeeds |
+| Asset integrity | every URL in `index.html` resolves under the deploy base path, nothing references localhost |
+| Bundle budget | `dist/` under 1.5 MB; the world atlas stays in its own chunk |
+| Logic | validation rules, metro-code integrity, offer generation, determinism |
+| Distances | five routes within 2% of independently computed great-circle figures |
+| Browser | drives the **built** site at 1440px and 375px — search, autocomplete, keyboard nav, route globe, no console errors, no horizontal overflow |
+| Accessibility | every control labelled, every button named, one `h1`, `lang` set, live region present |
+
+It runs a real headless Chrome against `dist/` served under `/rel-tours/`, because
+base-path mistakes only surface in the production build — never in `npm run dev`.
+
+## Deploying
+
+`npm run deploy` runs QA, then pushes `dist/` to the `gh-pages` branch via a temporary
+git worktree, so your working tree is never touched. A failing QA run aborts the deploy.
+
+The Vite `base` is `/rel-tours/` to match the Pages URL. Serving from a domain root
+instead (a custom domain) needs `BASE_PATH=/ npm run build`.
 
 ## Project layout
 
