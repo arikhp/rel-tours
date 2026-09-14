@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import FlightCard from './FlightCard.jsx'
 import SkeletonCard from './SkeletonCard.jsx'
-import { findAirport } from '../data/airports.js'
+import RouteMap from './RouteMap.jsx'
+import { findPlace } from '../data/airports.js'
 
 const SORTS = [
   { value: 'price', label: 'Cheapest' },
@@ -12,10 +13,10 @@ const SORTS = [
 const POPULAR_ROUTES = [
   { from: 'TLV', to: 'BCN' },
   { from: 'TLV', to: 'ATH' },
-  { from: 'TLV', to: 'LHR' },
-  { from: 'TLV', to: 'FCO' },
-  { from: 'TLV', to: 'BKK' },
-  { from: 'TLV', to: 'JFK' },
+  { from: 'TLV', to: 'LON' },
+  { from: 'TLV', to: 'ROM' },
+  { from: 'TLV', to: 'TYO' },
+  { from: 'TLV', to: 'NYC' },
 ]
 
 function Panel({ children }) {
@@ -65,7 +66,7 @@ export default function ResultsSection({ status, results, criteria, error, onRet
           </h2>
           <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             {POPULAR_ROUTES.map((route) => {
-              const dest = findAirport(route.to)
+              const dest = findPlace(route.to)
               return (
                 <button
                   key={`${route.from}-${route.to}`}
@@ -116,10 +117,12 @@ export default function ResultsSection({ status, results, criteria, error, onRet
 
       {status === 'success' && results.length > 0 && (
         <>
+          <RouteMap from={criteria.from} to={criteria.to} />
+
           <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-xl font-semibold text-text">
-                {findAirport(criteria.from)?.city} → {findAirport(criteria.to)?.city}
+                {findPlace(criteria.from)?.city} → {findPlace(criteria.to)?.city}
               </h2>
               <p className="mt-1 text-sm text-muted">
                 <span className="tnum">{results.length}</span> fares ·{' '}

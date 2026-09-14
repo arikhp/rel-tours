@@ -1,8 +1,9 @@
 /**
- * R.E.L Tours brand mark.
+ * R.E.L Tours mark.
  *
- * Hand-authored SVG so it stays crisp at any size and recolors with the theme
- * tokens. `showWordmark={false}` gives just the badge (footer, favicon parity).
+ * A complete R in the text colour, with a flight path climbing away from its
+ * shoulder — solid at the nose, dotted where it has already been. The letter
+ * stays fully legible; the climb is the accent.
  */
 export default function Logo({ size = 40, showWordmark = true, tagline = true }) {
   return (
@@ -10,50 +11,48 @@ export default function Logo({ size = 40, showWordmark = true, tagline = true })
       <svg
         width={size}
         height={size}
-        viewBox="0 0 64 64"
+        viewBox="0 0 48 48"
         role="img"
         aria-label="R.E.L Tours"
         className="shrink-0"
       >
         <title>R.E.L Tours</title>
         <defs>
-          <linearGradient id="relBadge" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="var(--color-accent)" />
-            <stop offset="100%" stopColor="var(--color-accent-2)" />
+          <linearGradient id="relClimb" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0%" stopColor="var(--color-accent-2)" />
+            <stop offset="100%" stopColor="var(--color-accent)" />
           </linearGradient>
         </defs>
 
-        <rect width="64" height="64" rx="14" fill="url(#relBadge)" />
+        <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+          {/* Stem and bowl. */}
+          <path
+            d="M12 42 V10 h9.5 a7.75 7.75 0 0 1 0 15.5 H12"
+            stroke="currentColor"
+            strokeWidth="4.5"
+          />
+          {/* Leg — without this the letter reads as a P. */}
+          <path d="M20 25.5 L28 42" stroke="currentColor" strokeWidth="4.5" />
 
-        {/* Flight path sweeping up through the lower-right corner. */}
-        <path
-          d="M6 52 C 26 50, 44 38, 58 16"
-          fill="none"
-          stroke="#070b12"
-          strokeOpacity="0.32"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-        />
+          {/* Trail already flown. */}
+          <path
+            d="M25.5 20 L31 14.5"
+            stroke="url(#relClimb)"
+            strokeWidth="2.5"
+            strokeDasharray="0.5 4.5"
+            opacity="0.8"
+          />
+          {/* The climb itself. */}
+          <path d="M33.5 12 L42.5 5.5" stroke="url(#relClimb)" strokeWidth="4" />
+        </g>
 
-        <text
-          x="32"
-          y="39"
-          textAnchor="middle"
-          fontFamily="var(--font-sans)"
-          fontSize="21"
-          fontWeight="700"
-          letterSpacing="0.5"
-          fill="#06121b"
-        >
-          REL
-        </text>
+        <circle cx="43.5" cy="5" r="3" fill="var(--color-accent)" />
       </svg>
 
       {showWordmark && (
         <span className="flex flex-col leading-none">
           <span className="text-[1.05rem] font-semibold tracking-tight text-text">
-            R.E.L{' '}
-            <span className="font-medium tracking-[0.22em] text-muted">TOURS</span>
+            R.E.L <span className="font-medium tracking-[0.22em] text-muted">TOURS</span>
           </span>
           {tagline && (
             <span className="mt-1 text-[0.62rem] tracking-[0.18em] text-muted uppercase">

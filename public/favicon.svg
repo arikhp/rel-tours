@@ -1,11 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
   <defs>
-    <linearGradient id="relFav" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#22d3ee" />
-      <stop offset="100%" stop-color="#3b82f6" />
+    <linearGradient id="relClimb" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#22d3ee" />
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="14" fill="url(#relFav)" />
-  <path d="M6 52 C 26 50, 44 38, 58 16" fill="none" stroke="#070b12" stroke-opacity="0.32" stroke-width="3.5" stroke-linecap="round" />
-  <text x="32" y="39" text-anchor="middle" font-family="ui-sans-serif, system-ui, Segoe UI, Roboto, Arial, sans-serif" font-size="21" font-weight="700" letter-spacing="0.5" fill="#06121b">REL</text>
+  <rect width="48" height="48" rx="10" fill="#070b12" />
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 41 V11 h9.5 a7.75 7.75 0 0 1 0 15.5 H12" stroke="#e8eef6" stroke-width="4.5" />
+    <path d="M20 26.5 L27.5 41" stroke="#e8eef6" stroke-width="4.5" />
+    <path d="M26 20 L31 15" stroke="url(#relClimb)" stroke-width="2.5" stroke-dasharray="0.5 4.5" opacity="0.8" />
+    <path d="M33.5 12.5 L41 6.5" stroke="url(#relClimb)" stroke-width="4" />
+  </g>
+  <circle cx="41.5" cy="6.5" r="3" fill="#22d3ee" />
 </svg>

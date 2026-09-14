@@ -1,4 +1,4 @@
-import { findAirport } from '../data/airports.js'
+import { findPlace } from '../data/airports.js'
 
 /** Today at local midnight — the earliest date a user may pick. */
 export function today() {
@@ -45,7 +45,7 @@ export function validateSearch(criteria) {
     errors.from = 'Enter a departure airport code.'
   } else if (!/^[A-Za-z]{3}$/.test(from.trim())) {
     errors.from = 'Codes are exactly 3 letters, e.g. TLV.'
-  } else if (!findAirport(from)) {
+  } else if (!findPlace(from)) {
     errors.from = `We don’t recognise “${from.toUpperCase()}”.`
   }
 
@@ -53,7 +53,7 @@ export function validateSearch(criteria) {
     errors.to = 'Enter an arrival airport code.'
   } else if (!/^[A-Za-z]{3}$/.test(to.trim())) {
     errors.to = 'Codes are exactly 3 letters, e.g. BCN.'
-  } else if (!findAirport(to)) {
+  } else if (!findPlace(to)) {
     errors.to = `We don’t recognise “${to.toUpperCase()}”.`
   }
 

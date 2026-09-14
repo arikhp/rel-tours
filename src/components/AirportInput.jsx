@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { findAirport, searchAirports } from '../data/airports.js'
+import { findPlace, searchPlaces } from '../data/airports.js'
 
 /**
  * A 3-letter IATA code field with type-ahead. Accepts city names too — typing
@@ -16,8 +16,8 @@ export default function AirportInput({ label, value, onChange, error, placeholde
   // While the dropdown is open the user is typing freely (possibly a city
   // name); otherwise the field mirrors the committed code.
   const shown = open ? query : value
-  const suggestions = open ? searchAirports(query) : []
-  const resolved = findAirport(value)
+  const suggestions = open ? searchPlaces(query) : []
+  const resolved = findPlace(value)
 
   useEffect(() => {
     if (!open) return
@@ -143,6 +143,11 @@ export default function AirportInput({ label, value, onChange, error, placeholde
                   , {airport.country} · {airport.name}
                 </span>
               </span>
+              {airport.isMetro && (
+                <span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-[0.65rem] font-semibold tracking-wide text-accent uppercase">
+                  {airport.airports.length} airports
+                </span>
+              )}
             </li>
           ))}
         </ul>

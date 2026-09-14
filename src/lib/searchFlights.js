@@ -1,4 +1,10 @@
 import { fromISODate, toISODate, daysBetween } from './validation.js'
+import { airportsFor, distanceKm } from '../data/airports.js'
+
+const CRUISE_KMH = 850
+const TAXI_MINUTES = 35
+// Each stop adds a detour plus a connection sit — roughly an hour and a half.
+const STOP_MINUTES = 90
 
 /**
  * ─────────────────────────────────────────────────────────────────────────────
@@ -11,7 +17,9 @@ import { fromISODate, toISODate, daysBetween } from './validation.js'
  *
  * Input (criteria):
  *   { from, to, earliest, latest, nights, flexibility, passengers, cabin }
- *     from, to        IATA codes, uppercase
+ *     from, to        IATA code of an airport OR a metro area (TYO, LON, NYC…).
+ *                     A metro means "any airport in this city" — expand it with
+ *                     airportsFor() before querying a real API.
  *     earliest, latest 'YYYY-MM-DD' bounds of the travel window
  *     nights          desired trip length
  *     flexibility     0 | 1 | 2 | 3 — days of slack either side of `nights`
@@ -19,9 +27,12 @@ import { fromISODate, toISODate, daysBetween } from './validation.js'
  *     cabin           'economy' | 'premium' | 'business' | 'first'
  *
  * Output: Promise<Offer[]>, where Offer is
- *   { id, price, currency, airline, airlineCode, departDate, returnDate,
- *     nights, stops, durationOutbound, durationReturn, deepLink }
+ *   { id, price, currency, airline, airlineCode, originAirport, destAirport,
+ *     departDate, returnDate, nights, stops, durationOutbound, durationReturn,
+ *     deepLink }
  *     price            number, total for all passengers
+ *     originAirport    the SPECIFIC airport flown from — differs from
+ *     destAirport      criteria.from/to whenever a metro area was searched
  *     durationOutbound minutes
  *
  * Throws on failure; the UI renders the thrown message.
@@ -98,8 +109,16 @@ function generateMockOffers(criteria) {
   const slack = Number(flexibility) || 0
   const pax = Number(passengers) || 1
 
-  // Longer routes cost more — a crude proxy, good enough to look plausible.
-  const routeBase = 60 + (hashString(`${from}-${to}`) % 340)
+  // A metro code stands for several airports; each offer flies from exactly one.
+  const origins = airportsFor(from)
+  const destinations = airportsFor(to)
+  if (origins.length === 0 || destinations.length === 0) return []
+
+  // Price and flight time both scale off the real great-circle distance, so the
+  // cards agree with the distance and nonstop estimate the route map shows.
+  const km = distanceKm(from, to)
+  const routeBase = 45 + km * 0.022
+  const nonstopMinutes = (km / CRUISE_KMH) * 60 + TAXI_MINUTES
   const cabinMult = CABIN_MULTIPLIER[cabin] ?? 1
 
   const offers = []
@@ -124,8 +143,9 @@ function generateMockOffers(criteria) {
       const perPerson =
         routeBase * cabinMult * stopDiscount * (1 + weekendLoad) * (0.78 + random() * 0.65)
 
-      const baseMinutes = 95 + (hashString(`${from}${to}`) % 340)
       const airline = AIRLINES[Math.floor(random() * AIRLINES.length)]
+      const originAirport = origins[Math.floor(random() * origins.length)]
+      const destAirport = destinations[Math.floor(random() * destinations.length)]
 
       offers.push({
         id: `${from}-${to}-${toISODate(departDate)}-${tripNights}-${offers.length}`,
@@ -133,12 +153,14 @@ function generateMockOffers(criteria) {
         currency: 'USD',
         airline: airline.name,
         airlineCode: airline.code,
+        originAirport: originAirport.code,
+        destAirport: destAirport.code,
         departDate: toISODate(departDate),
         returnDate: toISODate(returnDate),
         nights: tripNights,
         stops,
-        durationOutbound: Math.round(baseMinutes + stops * 110 + random() * 70),
-        durationReturn: Math.round(baseMinutes + stops * 105 + random() * 70),
+        durationOutbound: Math.round(nonstopMinutes + stops * STOP_MINUTES + random() * 45),
+        durationReturn: Math.round(nonstopMinutes + stops * STOP_MINUTES + random() * 45),
         deepLink: '#',
       })
     }

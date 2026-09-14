@@ -49,6 +49,10 @@ function Leg({ from, to, date, duration, stops }) {
 
 export default function FlightCard({ offer, from, to, isCheapest, passengers }) {
   const hue = avatarHue(offer.airlineCode)
+  // When a metro area was searched, the card must name the airport actually flown.
+  const origin = offer.originAirport ?? from
+  const dest = offer.destAirport ?? to
+  const viaMetro = origin !== from || dest !== to
   const price = offer.price.toLocaleString(undefined, {
     style: 'currency',
     currency: offer.currency,
@@ -73,7 +77,15 @@ export default function FlightCard({ offer, from, to, isCheapest, passengers }) 
           </span>
           <div className="min-w-0">
             <div className="truncate text-sm font-medium text-text">{offer.airline}</div>
-            <div className="text-xs text-muted tnum">{offer.nights} nights</div>
+            <div className="text-xs text-muted tnum">
+              {offer.nights} nights
+              {viaMetro && (
+                <span className="text-accent">
+                  {' '}
+                  · {origin}/{dest}
+                </span>
+              )}
+            </div>
           </div>
           {isCheapest && (
             <span className="ml-auto rounded-full bg-good/15 px-2.5 py-1 text-xs font-semibold text-good lg:hidden">
@@ -85,15 +97,15 @@ export default function FlightCard({ offer, from, to, isCheapest, passengers }) 
         {/* Legs */}
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <Leg
-            from={from}
-            to={to}
+            from={origin}
+            to={dest}
             date={offer.departDate}
             duration={offer.durationOutbound}
             stops={offer.stops}
           />
           <Leg
-            from={to}
-            to={from}
+            from={dest}
+            to={origin}
             date={offer.returnDate}
             duration={offer.durationReturn}
             stops={offer.stops}

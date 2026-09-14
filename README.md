@@ -10,7 +10,34 @@ combination in that window for the cheapest fare.
 ## Stack
 
 React 19 · Vite 8 · Tailwind CSS 4 (CSS-first config — there is no `tailwind.config.js`;
-the brand tokens live in the `@theme` block of `src/index.css`).
+the brand tokens live in the `@theme` block of `src/index.css`) · d3-geo + world-atlas
+for the route globe.
+
+## Metro areas
+
+A search accepts either a single airport (`HND`) or a **metropolitan area** covering
+several (`TYO` = Narita + Haneda). Metro codes rank above their own airports in the
+autocomplete and carry an "N airports" badge; each result then names the specific
+airport it flies from. `LON PAR ROM MIL NYC WAS CHI TYO OSA SEL BJS BUE SAO` are
+defined in `src/data/airports.js`.
+
+Istanbul and Shanghai are deliberately *not* metros: their IATA metro codes (`IST`,
+`SHA`) collide with an airport code, which would make a typed code ambiguous. A dev-only
+assertion in `airports.js` fails loudly if a future metro reintroduces such a collision.
+
+## Route globe
+
+`src/components/RouteMap.jsx` draws the searched route as a great circle on an
+orthographic globe, with distance, heading and a nonstop-time estimate. Two details
+worth knowing before editing it:
+
+- A great circle passing through the projection's centre draws as a **straight line**,
+  so the globe is deliberately centred *off* the route to make the arc bow.
+- The zoom adapts to route length — a 340 km hop gets a regional view, a 16,000 km
+  haul gets the whole globe — and the disc is clipped so zoomed views don't spill.
+
+The ~100 KB world outline is `import()`ed on first mount, so it ships as its own chunk
+rather than in the initial bundle.
 
 ## Getting started
 
@@ -36,9 +63,10 @@ src/
 │  ├─ Stepper.jsx          number field with −/+ (nights, passengers)
 │  ├─ ResultsSection.jsx   idle / loading / empty / error / results
 │  ├─ FlightCard.jsx       one fare
+│  ├─ RouteMap.jsx         great-circle globe for the searched route
 │  ├─ SkeletonCard.jsx     loading placeholder
 │  └─ Footer.jsx
-├─ data/airports.js        ~130 airports + findAirport / searchAirports
+├─ data/airports.js        airports + metro areas, findPlace / searchPlaces / distanceKm
 └─ lib/
    ├─ validation.js        validateSearch + date helpers
    └─ searchFlights.js     ← the backend seam
@@ -55,8 +83,12 @@ resolved shape identical and no component needs to change.
 searchFlights(criteria) => Promise<Offer[]>
 
 criteria  { from, to, earliest, latest, nights, flexibility, passengers, cabin }
-Offer     { id, price, currency, airline, airlineCode, departDate, returnDate,
-            nights, stops, durationOutbound, durationReturn, deepLink }
+            from/to may be an airport OR a metro code — expand with airportsFor()
+Offer     { id, price, currency, airline, airlineCode, originAirport, destAirport,
+            departDate, returnDate, nights, stops, durationOutbound,
+            durationReturn, deepLink }
+            originAirport/destAirport are the SPECIFIC airports flown, which
+            differ from criteria.from/to whenever a metro area was searched
 ```
 
 Everything below that function in the file is disposable mock-data generation. The mock
@@ -64,7 +96,9 @@ is seeded off the search criteria, so the same route returns the same prices rat
 reshuffling on every submit.
 
 `src/data/airports.js` is a curated static list; it can later be backed by a lookup
-endpoint — keep `findAirport` / `searchAirports` as the only accessors.
+endpoint — keep `findPlace` / `searchPlaces` / `airportsFor` as the only accessors.
+Its coordinates are approximate (good to a few km) and exist to plot the route globe
+and scale the mock prices and durations by real distance, not to navigate by.
 
 ## Design tokens
 
