@@ -125,8 +125,9 @@ export default function SearchForm({ onSearch, busy, prefill }) {
           onClick={swap}
           aria-label="Swap departure and arrival"
           /* Stacked on mobile: sits in the gutter between the two fields.
-             Side by side from md: centred on the divider between them. */
-          className="absolute top-[6rem] right-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface-2 text-muted transition-colors hover:border-accent hover:text-accent md:top-[4.6rem] md:right-auto md:left-1/2 md:-translate-x-1/2"
+             Side by side from md: centred on the inputs themselves, straddling
+             the divider — any lower and it covers the resolved-airport caption. */
+          className="absolute top-[6rem] right-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface-2 text-muted transition-colors hover:border-accent hover:text-accent md:top-[1.85rem] md:right-auto md:left-1/2 md:-translate-x-1/2"
         >
           {/* Arrows point along the axis the fields are laid out on. */}
           <svg

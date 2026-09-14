@@ -17,7 +17,11 @@ const DIST = join(ROOT, 'dist')
 const WORKTREE = join(ROOT, '.gh-pages-worktree')
 const BRANCH = 'gh-pages'
 
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+// Invoke tools by their JS entry point rather than through npm: on Windows npm
+// is a .cmd shim, and Node refuses to spawn .cmd without shell:true.
+const node = process.execPath
+const QA = join(ROOT, 'scripts', 'qa.mjs')
+const VITE = join(ROOT, 'node_modules', 'vite', 'bin', 'vite.js')
 
 function sh(cmd, args, opts = {}) {
   const r = spawnSync(cmd, args, { cwd: ROOT, stdio: 'inherit', ...opts })
@@ -32,10 +36,10 @@ const quiet = (cmd, args) =>
 
 if (!process.argv.includes('--skip-qa')) {
   console.log('▸ Running QA before deploy…\n')
-  sh(npm, ['run', 'qa'])
+  sh(node, [QA])
 } else {
   console.log('▸ Skipping QA (--skip-qa)\n')
-  sh(npm, ['run', 'build'])
+  sh(node, [VITE, 'build'])
 }
 
 if (!existsSync(join(DIST, 'index.html'))) {

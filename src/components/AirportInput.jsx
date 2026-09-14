@@ -101,13 +101,15 @@ export default function AirportInput({ label, value, onChange, error, placeholde
         }`}
       />
 
-      {/* Caption: the error, or confirmation of which airport the code resolved to. */}
+      {/* Caption: the error, or confirmation of which airport the code resolved to.
+          Right padding below md keeps the text clear of the swap button, which
+          floats over this row while the fields are stacked. */}
       {error ? (
-        <p id={`${id}-error`} className="mt-1.5 text-xs text-red-400">
+        <p id={`${id}-error`} className="mt-1.5 pr-12 text-xs text-red-400 md:pr-0">
           {error}
         </p>
       ) : (
-        <p className="mt-1.5 truncate text-xs text-muted">
+        <p className="mt-1.5 truncate pr-12 text-xs text-muted md:pr-0">
           {resolved ? `${resolved.city}, ${resolved.country} · ${resolved.name}` : ' '}
         </p>
       )}

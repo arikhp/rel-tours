@@ -261,6 +261,26 @@ if (!CHROME) {
       await sleep(150)
       check(`[${label}] arrow key moves the highlight`, (await ev(`document.querySelectorAll('[role=option][aria-selected=true]').length`)) === 1)
 
+      // The swap button floats over the route fields; it must not land on top of
+      // the caption naming the resolved airport.
+      const overlap = await ev(`
+        (() => {
+          const b = document.querySelector('button[aria-label="Swap departure and arrival"]');
+          if (!b) return 'missing';
+          const s = b.getBoundingClientRect();
+          // Measure the glyphs, not the paragraph box: a full-width <p> with
+          // right padding still spans under the button while its text does not.
+          const hits = Array.from(document.querySelectorAll('form p')).filter(p => {
+            if (!p.textContent.trim()) return false;
+            const range = document.createRange();
+            range.selectNodeContents(p);
+            return Array.from(range.getClientRects()).some(r =>
+              s.left < r.right && s.right > r.left && s.top < r.bottom && s.bottom > r.top);
+          });
+          return hits.map(p => p.textContent.trim()).join(' | ') || 'clear';
+        })()`)
+      check(`[${label}] swap button clears the field captions`, overlap === 'clear', overlap)
+
       // Full search.
       await setCombo(0, 'TLV'); await setCombo(1, 'TYO')
       await ev(`document.body.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}))`)
