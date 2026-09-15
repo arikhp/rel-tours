@@ -21,12 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # api/ doesn't have a repo-wide .nvmrc/engines pin yet (that lands with
-      # REL-7's CI workflow) — 22 matches the version REL-7 pins elsewhere, so
-      # this can switch to `node-version-file: .nvmrc` once that's merged.
       - uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: api/package-lock.json
 
