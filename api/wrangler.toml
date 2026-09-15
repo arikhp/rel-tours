@@ -1,6 +1,7 @@
 name = "rel-tours-api"
 main = "src/index.js"
 compatibility_date = "2026-09-15"
+account_id = "c0a159fff33f3b56b1b71eb1dc4f739c"
 
 [dev]
 port = 8787
@@ -10,9 +11,8 @@ port = 8787
 # development, copy api/.dev.vars.example to api/.dev.vars (gitignored) and fill
 # in real values.
 
-# KV namespace bindings for the fare cache and rate limiters are added in REL-15
-# and REL-22/REL-31, once the ids exist:
-#
-# [[kv_namespaces]]
-# binding = "FARE_CACHE"
-# id = "<namespace-id>"
+# Fare cache KV namespace, provisioned in REL-8. Nothing reads/writes it yet —
+# that's wired up in REL-15. Rate-limiter namespaces still land in REL-22/REL-31.
+[[kv_namespaces]]
+binding = "FARE_CACHE"
+id = "b88fdabeca174a34bfe0b0fc01edc4ff"
