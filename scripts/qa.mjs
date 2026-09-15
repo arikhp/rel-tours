@@ -165,18 +165,30 @@ await new Promise((r) => server.listen(PORT, r))
 const SITE = `http://localhost:${PORT}${BASE}`
 console.log(c.dim(`    serving dist/ at ${SITE}`))
 
-const CHROME = [
-  'C:/Program Files/Google/Chrome/Application/chrome.exe',
-  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
-  '/usr/bin/google-chrome',
-  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-].find((p) => existsSync(p))
+// CHROME_PATH wins when set — CI provisions Chrome via browser-actions/setup-chrome
+// and exports its exact binary path there, since the installed name/location isn't
+// one of the fixed local dev paths below (and varies by runner OS).
+const CHROME =
+  (process.env.CHROME_PATH && existsSync(process.env.CHROME_PATH) && process.env.CHROME_PATH) ||
+  [
+    'C:/Program Files/Google/Chrome/Application/chrome.exe',
+    'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+    '/usr/bin/google-chrome',
+    '/usr/bin/chromium-browser',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  ].find((p) => existsSync(p))
 
 if (!CHROME) {
   check('a Chromium browser is available', false, 'install Chrome or Edge to run browser QA')
 } else {
   const chrome = spawn(CHROME, [
     '--headless', '--disable-gpu', '--hide-scrollbars', '--no-first-run',
+    // CI runners can't use Chrome's setuid sandbox (no permission to create
+    // the namespaces it needs) and often have a tiny /dev/shm — both make
+    // the renderer fail to start silently, which shows up as the CDP
+    // endpoint never listing a `page` target. Harmless locally too, since
+    // this Chrome instance only ever loads our own local dist/ build.
+    '--no-sandbox', '--disable-dev-shm-usage',
     `--remote-debugging-port=${CDP_PORT}`,
     `--user-data-dir=${join(ROOT, 'node_modules', '.qa-chrome')}`,
     'about:blank',
@@ -190,6 +202,13 @@ if (!CHROME) {
         if (targets.some((t) => t.type === 'page')) break
       } catch { /* browser still starting */ }
       await sleep(400)
+    }
+    if (!targets?.some((t) => t.type === 'page')) {
+      throw new Error(
+        `Chrome never exposed a "page" target on the CDP endpoint after 12s ` +
+          `(binary: ${CHROME}). It likely failed to launch — try running it ` +
+          'directly to see stderr.',
+      )
     }
 
     const ws = new WebSocket(targets.find((t) => t.type === 'page').webSocketDebuggerUrl)

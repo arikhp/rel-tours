@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            api/package-lock.json
+
+      - name: Install dependencies (site)
+        run: npm ci
+
+      - name: Lint (oxlint)
+        run: npm run lint
+
+      # qa.mjs discovers Chrome from a fixed list of local dev paths, none of
+      # which exist on a GitHub-hosted runner — CHROME_PATH overrides that list.
+      - name: Set up Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v2
+
+      - name: QA pipeline (build, logic, distances, browser, accessibility)
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: npm run qa
+
+      - name: Install dependencies (api/)
+        working-directory: api
+        run: npm ci
+
+      - name: api/ tests
+        working-directory: api
+        run: npm test
