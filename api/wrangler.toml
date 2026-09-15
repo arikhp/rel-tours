@@ -1,0 +1,18 @@
+name = "rel-tours-api"
+main = "src/index.js"
+compatibility_date = "2026-09-15"
+
+[dev]
+port = 8787
+
+# Runtime secrets (TRAVELPAYOUTS_TOKEN, TP_MARKER, SERPAPI_KEY, ...) are set with
+# `wrangler secret put <NAME>` — never listed here and never committed. For local
+# development, copy api/.dev.vars.example to api/.dev.vars (gitignored) and fill
+# in real values.
+
+# KV namespace bindings for the fare cache and rate limiters are added in REL-15
+# and REL-22/REL-31, once the ids exist:
+#
+# [[kv_namespaces]]
+# binding = "FARE_CACHE"
+# id = "<namespace-id>"
