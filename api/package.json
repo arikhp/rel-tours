@@ -1,0 +1,15 @@
+{
+  "name": "rel-tours-api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "vitest run",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.11",
+    "wrangler": "^4.132.0"
+  }
+}

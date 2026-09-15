@@ -29,3 +29,7 @@ dist-ssr
 # gh-pages deploy worktree (created and removed by npm run deploy)
 .gh-pages-worktree/
 node_modules/.qa-chrome/
+
+# Cloudflare Worker (api/) — local secrets and wrangler's local state
+api/.dev.vars
+api/.wrangler/

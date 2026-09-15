@@ -1,0 +1,14 @@
+# Copy this file to `.dev.vars` (gitignored) for local `wrangler dev`.
+# In production these are set with `wrangler secret put <NAME>` — never here,
+# never in wrangler.toml, never committed.
+
+# Travelpayouts Data API — free token, no approval required.
+# Get one at https://www.travelpayouts.com/developers/api (added in REL-12).
+TRAVELPAYOUTS_TOKEN=
+
+# Travelpayouts affiliate marker, for attributing deep-link clicks (REL-25).
+TP_MARKER=
+
+# SerpApi key for live price confirmation — 250 free searches/month.
+# Get one at https://serpapi.com (added in REL-21).
+SERPAPI_KEY=
