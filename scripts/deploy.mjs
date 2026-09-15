@@ -1,6 +1,12 @@
 /**
  * Publish dist/ to the gh-pages branch. Run with `npm run deploy`.
  *
+ * NOTE: as of REL-9, this is no longer the primary deploy path. GitHub Pages
+ * now publishes from .github/workflows/deploy-pages.yml, which runs in CI
+ * after the CI workflow passes on main. This script is kept as an emergency
+ * / manual fallback (e.g. if Actions is down or you need to push a one-off
+ * build from a laptop) — it still works, but don't rely on it day to day.
+ *
  * Uses a temporary worktree so your working tree is never touched — no stashing,
  * no branch switching, nothing to clean up if it fails partway.
  *
