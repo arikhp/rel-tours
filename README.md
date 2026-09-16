@@ -75,6 +75,20 @@ git worktree, so your working tree is never touched. A failing QA run aborts the
 The Vite `base` is `/rel-tours/` to match the Pages URL. Serving from a domain root
 instead (a custom domain) needs `BASE_PATH=/ npm run build`.
 
+## Contributing
+
+Work is tracked in Jira at [rel-nujnov.atlassian.net](https://rel-nujnov.atlassian.net)
+(project key `REL`), connected to this repo via GitHub for Jira — an open PR shows up
+on its Jira issue automatically.
+
+- **Branches**: `feat/REL-<number>-<slug>` for feature work, `spike/REL-<number>-<slug>`
+  for spikes (e.g. `feat/REL-10-branch-protection`).
+- **PR titles and commit messages** should reference the Jira key (e.g. `REL-10: ...`),
+  so the link back to the ticket is unambiguous even without the GitHub integration.
+- **`main` is protected**: pushes go through a pull request, and the `ci` check (lint,
+  the QA suite, and the `api/` test suite — see [CI workflow](.github/workflows/ci.yml))
+  must pass before a PR can be merged.
+
 ## Project layout
 
 ```
