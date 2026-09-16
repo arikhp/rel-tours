@@ -95,6 +95,7 @@ stage('Logic')
 const { validateSearch, toISODate, today } = await import('../src/lib/validation.js')
 const { searchFlights } = await import('../src/lib/searchFlights.js')
 const { findPlace, searchPlaces, airportsFor, distanceKm, metros, airports } = await import('../src/data/airports.js')
+const { findAirline, airlines } = await import('../src/data/airlines.js')
 
 const d = (off) => {
   const x = new Date(today())
@@ -122,6 +123,15 @@ check('every airport has coordinates', airports.every((a) => Number.isFinite(a.l
 check('TYO expands to Narita and Haneda', airportsFor('TYO').map((a) => a.code).sort().join(',') === 'HND,NRT')
 check('metro outranks its own airports', searchPlaces('tokyo')[0]?.code === 'TYO')
 check('lowercase code resolves', findPlace('tlv')?.city === 'Tel Aviv')
+
+// Airline lookup — known codes resolve, unknown codes fall back to the code
+// itself rather than an empty string, and lookup is case-insensitive.
+check('all airline codes unique', new Set(airlines.map((a) => a.code)).size === airlines.length)
+check('every airline has a code and a name', airlines.every((a) => a.code && a.name))
+check('known airline code resolves to its name', findAirline('LY')?.name === 'El Al')
+check('lowercase airline code resolves', findAirline('ly')?.name === 'El Al')
+check('unknown airline code falls back to the code itself', findAirline('ZZ')?.name === 'ZZ')
+check('lowercase unknown airline code falls back uppercased', findAirline('zz')?.name === 'ZZ')
 
 // Distances against published great-circle figures (±2%). Each baseline is an
 // independently computed figure, not a value copied back out of this codebase.
