@@ -1,0 +1,73 @@
+name: Deploy to GitHub Pages
+
+# Runs only after the CI workflow (.github/workflows/ci.yml, named "CI") has
+# finished successfully on main — CI's own `push: [main]` trigger fires first,
+# and this workflow reacts to *that run's* completion via workflow_run. This
+# is the gate: if CI fails (or is skipped/cancelled), the `if:` check on the
+# deploy job below stops the site from publishing. workflow_dispatch is also
+# enabled so a deploy can be re-run by hand without needing a new CI run.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+# Only one Pages deployment at a time; never cancel one mid-flight, or the
+# live site could end up serving a half-uploaded artifact.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # workflow_run always checks out the branch's default ref unless told
+          # otherwise, which can be stale relative to the CI run that triggered
+          # this workflow. Pin explicitly to the commit CI actually validated.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          # Vite inlines this at build time (import.meta.env.VITE_API_URL) —
+          # there is no runtime env var on the deployed static site. Sourced
+          # from a repo Actions variable (Settings > Secrets and variables >
+          # Actions > Variables) so it can change without editing this file.
+          # BASE_PATH is intentionally left unset so vite.config.js's default
+          # of /rel-tours/ applies, matching the GitHub Pages project-site path.
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+        run: npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
