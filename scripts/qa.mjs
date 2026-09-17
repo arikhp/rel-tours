@@ -236,7 +236,8 @@ if (!CHROME) {
       if (m.id && pending.has(m.id)) {
         const { resolve, reject } = pending.get(m.id)
         pending.delete(m.id)
-        m.error ? reject(new Error(JSON.stringify(m.error))) : resolve(m.result)
+        if (m.error) reject(new Error(JSON.stringify(m.error)))
+        else resolve(m.result)
       }
     }
     const send = (method, params = {}) =>
