@@ -1,0 +1,11 @@
+{
+  "requestUrl": "https://api.travelpayouts.com/v1/prices/calendar?origin=TLV&destination=ULN&depart_date=2026-11",
+  "status": 400,
+  "fetchedAt": "2026-09-17T18:03:56.256Z",
+  "body": {
+    "error": "bad request: airport ULN: not flightable",
+    "data": null,
+    "status": 400,
+    "success": false
+  }
+}

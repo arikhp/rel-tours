@@ -1,0 +1,11 @@
+{
+  "requestUrl": "https://api.travelpayouts.com/v2/prices/latest?origin=TLV&destination=ULN&currency=usd&limit=30",
+  "status": 200,
+  "fetchedAt": "2026-09-17T18:04:00.624Z",
+  "body": {
+    "currency": "usd",
+    "error": "",
+    "data": [],
+    "success": true
+  }
+}
