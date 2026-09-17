@@ -1,0 +1,56 @@
+{
+  "requestUrl": "https://api.travelpayouts.com/v2/prices/week-matrix?origin=TLV&destination=BCN&depart_date=2026-11-15&return_date=2026-11-22&currency=usd",
+  "status": 200,
+  "fetchedAt": "2026-09-17T18:05:18.207Z",
+  "body": {
+    "data": [
+      {
+        "depart_date": "2026-11-18",
+        "origin": "TLV",
+        "destination": "BCN",
+        "gate": "Trip.com",
+        "return_date": "2026-11-24",
+        "found_at": "2026-09-17T17:04:26Z",
+        "trip_class": 0,
+        "value": 194,
+        "number_of_changes": 1,
+        "duration": 1660,
+        "distance": 3081,
+        "show_to_affiliates": true,
+        "actual": true
+      },
+      {
+        "depart_date": "2026-11-17",
+        "origin": "TLV",
+        "destination": "BCN",
+        "gate": "Kupi.com",
+        "return_date": "2026-11-22",
+        "found_at": "2026-09-15T15:24:35Z",
+        "trip_class": 0,
+        "value": 197,
+        "number_of_changes": 1,
+        "duration": 2065,
+        "distance": 3081,
+        "show_to_affiliates": true,
+        "actual": true
+      },
+      {
+        "depart_date": "2026-11-17",
+        "origin": "TLV",
+        "destination": "BCN",
+        "gate": "Trip.com",
+        "return_date": "2026-11-23",
+        "found_at": "2026-09-17T17:05:13Z",
+        "trip_class": 0,
+        "value": 219,
+        "number_of_changes": 1,
+        "duration": 1110,
+        "distance": 3081,
+        "show_to_affiliates": true,
+        "actual": true
+      }
+    ],
+    "currency": "usd",
+    "success": true
+  }
+}
