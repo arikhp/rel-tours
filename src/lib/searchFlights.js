@@ -1,6 +1,13 @@
 import { fromISODate, toISODate, daysBetween } from './validation.js'
 import { airportsFor, distanceKm } from '../data/airports.js'
 
+// REL-17: these three constants and the nonstop/estimate formula below are
+// duplicated (not imported) in api/src/duration.js, which is the real path's
+// source of truth for duration estimates and for the real-vs-estimate
+// decision the mock has no need for. api/ and this Vite app are separate npm
+// packages with no clean import path between them (see the packaging note at
+// the top of api/src/duration.js) — if you change these values, change them
+// there too.
 const CRUISE_KMH = 850
 const TAXI_MINUTES = 35
 // Each stop adds a detour plus a connection sit — roughly an hour and a half.
