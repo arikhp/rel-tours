@@ -1,5 +1,6 @@
 import { fromISODate, toISODate, daysBetween } from './validation.js'
 import { airportsFor, distanceKm } from '../data/airports.js'
+import { fetchFromWorker } from './fareSource.js'
 
 // REL-17: these three constants and the nonstop/estimate formula below are
 // duplicated (not imported) in api/src/duration.js, which is the real path's
@@ -43,9 +44,23 @@ const STOP_MINUTES = 90
  *     durationOutbound minutes
  *
  * Throws on failure; the UI renders the thrown message.
+ *
+ * REL-19: real vs. mock is picked here, once, off `VITE_API_URL`. When it's
+ * set, every search goes to the real Worker's `/search` route via
+ * fareSource.js (request building, abort-on-new-search, and turning a
+ * non-2xx/network failure into a readable Error all live there — this
+ * function stays a one-line dispatch). When it's unset — including every
+ * `npm run qa` run, which never sets it — this falls through to the mock
+ * below exactly as before, so the mock keeps working fully offline and stays
+ * QA's fixture for the Logic stage. See README's "The backend seam".
  * ─────────────────────────────────────────────────────────────────────────────
  */
 export async function searchFlights(criteria) {
+  const apiUrl = import.meta.env?.VITE_API_URL
+  if (apiUrl) {
+    return fetchFromWorker(apiUrl, criteria)
+  }
+
   await new Promise((resolve) => setTimeout(resolve, 900))
   return generateMockOffers(criteria)
 }

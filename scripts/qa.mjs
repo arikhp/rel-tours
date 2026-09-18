@@ -158,6 +158,71 @@ const nonstopTokyo = (distanceKm('TLV', 'TYO') / 850) * 60 + 35
 check('durations consistent with distance', tyo.every((o) => o.durationOutbound >= nonstopTokyo - 5),
   `min ${Math.min(...tyo.map((o) => o.durationOutbound))}m vs nonstop ${Math.round(nonstopTokyo)}m`)
 
+// REL-19: fareSource.js is the real-Worker half of the backend seam. It takes
+// `apiUrl` as a plain parameter (not `import.meta.env.VITE_API_URL`), so —
+// unlike searchFlights.js's own mock/real dispatch, which only resolves that
+// env var inside a real Vite build/dev server — it can be exercised directly
+// here with a stubbed `fetch`, no browser required. This is the "mocked/
+// stubbed fetch" verification the ticket calls for; VITE_API_URL itself stays
+// unset for the rest of this run, so every `searchFlights()` call above and
+// below still takes the mock path — the thing this suite has always tested.
+stage('Logic — fareSource (REL-19 Worker path)')
+const { buildSearchUrl, fetchFromWorker } = await import('../src/lib/fareSource.js')
+
+const workerCriteria = { ...base }
+const searchUrl = buildSearchUrl('https://worker.example', workerCriteria)
+check('fareSource builds a /search URL carrying the criteria as query params',
+  searchUrl.startsWith('https://worker.example/search?') && searchUrl.includes('from=TLV') && searchUrl.includes('to=BCN'))
+check('fareSource includes a computed distanceKm query param', /distanceKm=\d+/.test(searchUrl))
+
+const realFetch = globalThis.fetch
+try {
+  globalThis.fetch = async () => new Response(JSON.stringify([{ id: '1', price: 100 }]), { status: 200 })
+  const workerOffers = await fetchFromWorker('https://worker.example', workerCriteria)
+  check('a successful Worker response resolves to Offer[]', Array.isArray(workerOffers) && workerOffers[0]?.price === 100)
+
+  globalThis.fetch = async () =>
+    new Response(JSON.stringify({ error: 'upstream_error', message: 'fare provider unavailable' }), { status: 503 })
+  let errMessage = null
+  try {
+    await fetchFromWorker('https://worker.example', workerCriteria)
+  } catch (err) {
+    errMessage = err?.message
+  }
+  check('a non-2xx Worker response throws a readable Error, not [object Object]', errMessage === 'fare provider unavailable')
+
+  globalThis.fetch = async () => {
+    throw new TypeError('network down')
+  }
+  let networkMessage = null
+  try {
+    await fetchFromWorker('https://worker.example', workerCriteria)
+  } catch (err) {
+    networkMessage = err?.message
+  }
+  check('a network failure throws a readable, non-empty Error message',
+    typeof networkMessage === 'string' && networkMessage.length > 0 && networkMessage !== '[object Object]')
+
+  // Abort-on-new-search: a second fetchFromWorker() call must abort the
+  // first's still-pending fetch, not just let App.jsx discard its result.
+  let firstSignal = null
+  globalThis.fetch = (_url, init) => {
+    firstSignal = init.signal
+    return new Promise((_resolve, reject) => {
+      init.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })))
+    })
+  }
+  const firstPromise = fetchFromWorker('https://worker.example', workerCriteria)
+  globalThis.fetch = async () => new Response(JSON.stringify([]), { status: 200 })
+  const secondPromise = fetchFromWorker('https://worker.example', workerCriteria)
+  const [firstResult, secondResult] = await Promise.allSettled([firstPromise, secondPromise])
+  check('starting a new search aborts the previous in-flight Worker fetch',
+    firstResult.status === 'rejected' && firstSignal?.aborted === true)
+  check('the newer search still resolves normally after the abort', secondResult.status === 'fulfilled')
+} finally {
+  globalThis.fetch = realFetch
+}
+
 // ─── 4. Serve the built site and drive a real browser ────────────────────────
 stage('Browser (production build)')
 
