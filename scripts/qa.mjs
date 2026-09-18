@@ -18,12 +18,14 @@ const CDP_PORT = 9455
 
 let failures = 0
 let checks = 0
+let skipped = 0
 const started = Date.now()
 
 const c = {
   dim: (s) => `\x1b[2m${s}\x1b[0m`,
   red: (s) => `\x1b[31m${s}\x1b[0m`,
   green: (s) => `\x1b[32m${s}\x1b[0m`,
+  yellow: (s) => `\x1b[33m${s}\x1b[0m`,
   bold: (s) => `\x1b[1m${s}\x1b[0m`,
 }
 
@@ -36,6 +38,15 @@ function check(name, ok, detail = '') {
   if (!ok) failures++
   console.log(`  ${ok ? c.green('PASS') : c.red('FAIL')}  ${name}${detail ? c.dim(' — ' + detail) : ''}`)
   return ok
+}
+
+// Reports a stage as deliberately not run — distinct from `check()` so a skip
+// can never masquerade as a pass in the summary, but also never fails the run.
+// Used only by checks that depend on something `npm run qa` can't guarantee
+// (network access to a live host), never as a substitute for a real assertion.
+function skip(name, reason = '') {
+  skipped++
+  console.log(`  ${c.yellow('SKIP')}  ${name}${reason ? c.dim(' — ' + reason) : ''}`)
 }
 
 /**
@@ -223,7 +234,66 @@ try {
   globalThis.fetch = realFetch
 }
 
-// ─── 4. Serve the built site and drive a real browser ────────────────────────
+// ─── 4. Live smoke (deployed Worker) ──────────────────────────────────────────
+stage('Live smoke (deployed Worker)')
+
+const WORKER_HEALTH_URL = 'https://rel-tours-api.rel-nujnov.workers.dev/health'
+const LIVE_TIMEOUT_MS = 5000
+
+// This is the one check in the suite that isn't reproducible offline: a real
+// HTTPS request to the deployed Worker. It checks /health only, not a live
+// /search — the deployed Worker doesn't have its TRAVELPAYOUTS_TOKEN secret
+// configured yet (REL-19's closing comment tracks setting it as a manual
+// follow-up), so a live /search would fail with a 500 right now for a reason
+// that has nothing to do with whether this PR's code is correct — a guaranteed
+// false alarm, not a useful smoke test. /health needs no auth and is genuinely
+// live today, so it's the honest way to catch "the deployment itself is
+// broken" without coupling to that unrelated, not-yet-done manual step.
+// Whoever eventually adds a live /search check, once the secret exists, should
+// read this comment first.
+//
+// Skip/fail distinction is the actual point of this stage: a request that
+// never completes (DNS failure, connection refused, our own short timeout)
+// means *this environment* can't reach the network — that's a skip, not a
+// failure, because `npm run qa` has to keep working for a developer offline or
+// a sandboxed CI runner with restricted egress. A request that *does*
+// complete but comes back wrong (non-200, or a body that isn't
+// `{ status: 'ok', time: '...' }`) means the reachable Worker is actually
+// broken — that's a real failure, reported like any other check.
+//
+// Deliberately run before the browser stage below, not after: this stage's
+// own network I/O adds a variable delay before the process would otherwise
+// exit, and on Windows that extra delay after Chrome's `--headless` process
+// is spawned/killed has been observed to race a libuv async-handle teardown
+// (`UV_HANDLE_CLOSING` assertion in src/win/async.c) that a delay-free exit
+// never hit. Running the live check first keeps the browser stage's own
+// spawn/kill-to-exit timing exactly as it always was.
+if (process.env.QA_SKIP_LIVE) {
+  skip('Worker /health check', 'QA_SKIP_LIVE is set')
+} else {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), LIVE_TIMEOUT_MS)
+  let res = null
+  try {
+    res = await fetch(WORKER_HEALTH_URL, { signal: controller.signal })
+  } catch (err) {
+    skip('Worker /health check', `live check skipped: network unreachable (${err?.message || err})`)
+  } finally {
+    clearTimeout(timer)
+  }
+  if (res) {
+    check('Worker /health responds 200', res.status === 200, `got ${res.status}`)
+    let body = null
+    let wellFormed = false
+    try {
+      body = await res.json()
+      wellFormed = body?.status === 'ok' && typeof body?.time === 'string'
+    } catch { /* malformed body — reported by the check below */ }
+    check(`Worker /health body is { status: 'ok', time: '...' }`, wellFormed, wellFormed ? '' : JSON.stringify(body))
+  }
+}
+
+// ─── 5. Serve the built site and drive a real browser ────────────────────────
 stage('Browser (production build)')
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json' }
@@ -437,10 +507,11 @@ server.close()
 
 // ─── Report ──────────────────────────────────────────────────────────────────
 const secs = ((Date.now() - started) / 1000).toFixed(1)
+const skipNote = skipped > 0 ? c.dim(c.yellow(`  (${skipped} skipped)`)) : ''
 console.log(`\n${c.bold('─'.repeat(58))}`)
 if (failures === 0) {
-  console.log(c.green(c.bold(`✔ QA PASSED  ${checks} checks in ${secs}s`)))
+  console.log(c.green(c.bold(`✔ QA PASSED  ${checks} checks in ${secs}s`)) + skipNote)
 } else {
-  console.log(c.red(c.bold(`✖ QA FAILED  ${failures} of ${checks} checks failed (${secs}s)`)))
+  console.log(c.red(c.bold(`✖ QA FAILED  ${failures} of ${checks} checks failed (${secs}s)`)) + skipNote)
 }
 process.exit(failures === 0 ? 0 : 1)

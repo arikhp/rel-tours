@@ -52,20 +52,27 @@ npm run deploy   # runs QA, then publishes to GitHub Pages
 
 ## QA pipeline
 
-`npm run qa` is the gate in front of every deploy — 87 checks, ~20s:
+`npm run qa` is the gate in front of every deploy — 106 checks, ~20s:
 
 | Stage | What it proves |
 | --- | --- |
 | Lint & build | oxlint clean; production build succeeds |
 | Asset integrity | every URL in `index.html` resolves under the deploy base path, nothing references localhost |
 | Bundle budget | `dist/` under 1.5 MB; the world atlas stays in its own chunk |
-| Logic | validation rules, metro-code integrity, offer generation, determinism |
+| Logic | validation rules, metro-code integrity, offer generation, determinism, and the Worker fetch path (`fareSource.js`) against a stubbed `fetch` |
 | Distances | five routes within 2% of independently computed great-circle figures |
+| Live smoke | a real HTTPS request to the deployed Worker's `/health` endpoint — catches a genuinely broken deployment. Skippable with `QA_SKIP_LIVE=1`, and skips itself (rather than failing) when the network is unreachable, so the pipeline still runs fully offline |
 | Browser | drives the **built** site at 1440px and 375px — search, autocomplete, keyboard nav, route globe, no console errors, no horizontal overflow |
 | Accessibility | every control labelled, every button named, one `h1`, `lang` set, live region present |
 
 It runs a real headless Chrome against `dist/` served under `/rel-tours/`, because
 base-path mistakes only surface in the production build — never in `npm run dev`.
+
+Fares themselves come from `src/lib/searchFlights.js`, which dispatches on
+`import.meta.env.VITE_API_URL`: unset — which it always is for `npm run qa`, since
+that variable is never set in this repo's scripts or CI — it falls through to the
+same deterministic mock the Logic stage has always exercised, so the QA suite stays
+meaningful without needing a separate mechanism to pin it there.
 
 ## Deploying
 
